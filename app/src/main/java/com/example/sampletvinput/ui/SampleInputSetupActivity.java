@@ -21,6 +21,7 @@ public class SampleInputSetupActivity extends Activity {
     }
 
     public void scanChannelsCompleted() {
+        setResult(Activity.RESULT_OK);
         finish();
     }
 }
