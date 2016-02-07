@@ -57,7 +57,8 @@ public class SampleInputService extends TvInputService {
 
         @Override
         public boolean onTune(Uri channelUri) {
-            return startPlayback(0);
+            return false;
+            //return startPlayback(0);
         }
 
         @Override
