@@ -25,6 +25,10 @@ public class Program {
         mStartTime = convertTime(startTime);
         return this;
     }
+    public Program setStartTime(long startTime) {
+        mStartTime = startTime;
+        return this;
+    }
 
     public long getStartTime() {
         return mStartTime;
@@ -32,6 +36,11 @@ public class Program {
 
     public Program setEndTime(String endTime) {
         mEndTime = convertTime(endTime);
+        return this;
+    }
+
+    public Program setEndTime(long endTime) {
+        mEndTime = endTime;
         return this;
     }
 
