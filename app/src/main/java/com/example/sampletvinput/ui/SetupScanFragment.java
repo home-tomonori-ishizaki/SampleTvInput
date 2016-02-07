@@ -3,9 +3,12 @@ package com.example.sampletvinput.ui;
 import android.app.Fragment;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -15,8 +18,13 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
+import com.example.sampletvinput.data.Program;
+import com.example.sampletvinput.util.NhkUtils;
+import com.example.sampletvinput.util.PreferenceUtils;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SetupScanFragment extends Fragment {
@@ -70,21 +78,62 @@ public class SetupScanFragment extends Fragment {
 
             ContentResolver resolver = getActivity().getContentResolver();
 
+            // delete old programs,
+            // need to loop for each channel because SecurityException happens if selection is set
+            Uri channelUri = TvContract.buildChannelsUriForInput(inputId);
+            try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
+                int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
+                while (cursor.moveToNext()) {
+                    long channelId = cursor.getLong(idxChannelId);
+                    Uri programUri = TvContract.buildProgramsUriForChannel(channelId);
+                    resolver.delete(programUri, null, null);
+                }
+            }
             // delete old channels
-            resolver.delete(TvContract.buildChannelsUriForInput(inputId), null, null);
+            resolver.delete(channelUri, null, null);
 
+            // add new channels
             int channelNumber = 1;
             for (Map.Entry<String, String> entry : CHANNEL_MAP.entrySet()) {
+                String serviceId = entry.getKey();
                 ContentValues values = new ContentValues();
                 values.put(TvContract.Channels.COLUMN_INPUT_ID, inputId);
                 values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
                 values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, entry.getValue());
-                values.put(TvContract.Channels.COLUMN_SERVICE_ID, entry.getKey());
+                values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
                 resolver.insert(TvContract.Channels.CONTENT_URI, values);
-
                 ++channelNumber;
             }
 
+            // add new programs
+            try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
+                // COLUMN_SEARCHABLE is supported above api-level 23(M)
+                boolean hasSearchable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
+
+                int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
+                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+                while (cursor.moveToNext()) {
+                    long channelId = cursor.getLong(idxChannelId);
+                    String serviceId = cursor.getString(idxServiceId);
+                    List<Program> programs = NhkUtils.getPrograms(serviceId, PreferenceUtils.getApiKey(getActivity()));
+                    if (programs == null) {
+                        continue;
+                    }
+                    ContentValues  values = new ContentValues();
+                    values.put(TvContract.Programs.COLUMN_CHANNEL_ID, channelId);
+                    if (hasSearchable) {
+                        values.put(TvContract.Programs.COLUMN_SEARCHABLE, 1);
+                    }
+
+                    for (Program program : programs) {
+                        values.put(TvContract.Programs.COLUMN_TITLE, program.getName());
+                        values.put(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, program.getStartTime());
+                        values.put(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, program.getEndTime());
+                        values.put(TvContract.Programs.COLUMN_CANONICAL_GENRE, program.getGenre());
+                        resolver.insert(TvContract.Programs.CONTENT_URI, values);
+                    }
+                }
+            }
             return null;
         }
 
