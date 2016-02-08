@@ -9,7 +9,13 @@ import android.view.ViewGroup;
 import com.example.sampletvinput.R;
 import com.example.sampletvinput.data.Program;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class ProgramItemPresenter extends Presenter {
+    private static SimpleDateFormat DATE_FORMAT_START = new SimpleDateFormat("MM/dd HH:mm");
+    private static SimpleDateFormat DATE_FORMAT_END   = new SimpleDateFormat("HH:mm");
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
         Context context = parent.getContext();
@@ -31,6 +37,10 @@ public class ProgramItemPresenter extends Presenter {
         Program program = (Program)item;
 
         cardView.setTitleText(program.getName());
+
+        String content = DATE_FORMAT_START.format(new Date(program.getStartTime()))
+                + " - " + DATE_FORMAT_END.format(new Date(program.getEndTime()));
+        cardView.setContentText(content);
     }
 
     @Override
