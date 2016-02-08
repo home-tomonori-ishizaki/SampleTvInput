@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.media.tv.TvContract;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ClassPresenterSelector;
@@ -23,6 +24,8 @@ import java.util.Map;
 public class MainFragment extends BrowseFragment {
     private static final String TAG = BrowseFragment.class.getSimpleName();
     private ArrayObjectAdapter mRowAdapter;
+
+    private Handler mHandler = new Handler();
 
     public MainFragment() {
     }
@@ -71,7 +74,7 @@ public class MainFragment extends BrowseFragment {
                 int idxDisplayName = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_DISPLAY_NAME);
 
                 while (cursor.moveToNext()) {
-                    ArrayObjectAdapter programAdapter = new ArrayObjectAdapter(new ProgramItemPresenter());
+                    final ArrayObjectAdapter programAdapter = new ArrayObjectAdapter(new ProgramItemPresenter());
 
                     long channelId = cursor.getLong(idxChannelId);
                     List<Program> programs = getPrograms(channelId);
@@ -79,8 +82,14 @@ public class MainFragment extends BrowseFragment {
                         programAdapter.addAll(0, programs);
                     }
 
-                    String channelName = cursor.getString(idxDisplayName);
-                    mRowAdapter.add(new ListRow(new HeaderItem(0, channelName), programAdapter));
+                    final String channelName = cursor.getString(idxDisplayName);
+
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mRowAdapter.add(new ListRow(new HeaderItem(0, channelName), programAdapter));
+                        }
+                    });
                 }
             }
 
