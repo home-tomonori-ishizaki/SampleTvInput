@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.net.Uri;
+import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,6 +23,8 @@ import com.example.sampletvinput.data.Program;
 import com.example.sampletvinput.util.NhkUtils;
 import com.example.sampletvinput.util.PreferenceUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,6 +54,29 @@ public class SetupScanFragment extends Fragment {
             progressBar.setLayoutParams(layoutParams);
         }
         return progressBar;
+    }
+
+    @Override
+    public void onCreate (Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        try {
+            File httpCacheDir = new File(getActivity().getApplicationContext().getCacheDir(), "http");
+            long httpCacheSize = 10 * 1024 * 1024; // 10 MiB
+            HttpResponseCache.install(httpCacheDir, httpCacheSize);
+        }  catch(IOException e){
+            Log.i(TAG, "HTTP response cache installation failed:" + e);
+        }
+    }
+
+    @Override
+    public void onStop () {
+        super.onStop();
+
+        HttpResponseCache cache = HttpResponseCache.getInstalled();
+        if (cache != null) {
+            cache.flush();
+        }
     }
 
     @Override
