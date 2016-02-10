@@ -33,6 +33,14 @@ public class SetupScanFragment extends Fragment {
     private static final int SPINNER_WIDTH = 100;
     private static final int SPINNER_HEIGHT = 100;
 
+    public static SetupScanFragment newInstance(boolean isInitialScan) {
+        SetupScanFragment fragment = new SetupScanFragment();
+        Bundle args = new Bundle();
+        args.putBoolean("mode", isInitialScan);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -47,7 +55,9 @@ public class SetupScanFragment extends Fragment {
 
     @Override
     public void onResume() {
-        new ScanTask().execute(getActivity().getIntent().getStringExtra(TvInputInfo.EXTRA_INPUT_ID));
+        Bundle args = getArguments();
+        boolean isInitialScan = args.getBoolean("mode");
+        new ScanTask(isInitialScan).execute(getActivity().getIntent().getStringExtra(TvInputInfo.EXTRA_INPUT_ID));
         super.onResume();
     }
 
@@ -66,6 +76,12 @@ public class SetupScanFragment extends Fragment {
     });
 
     private class ScanTask extends AsyncTask<String, Void, Void> {
+
+        private boolean mIsInitialScan = false;
+
+        public ScanTask(boolean isInitialScan) {
+            mIsInitialScan = isInitialScan;
+        }
 
         @Override
         protected void onPreExecute() {
@@ -89,20 +105,23 @@ public class SetupScanFragment extends Fragment {
                     resolver.delete(programUri, null, null);
                 }
             }
-            // delete old channels
-            resolver.delete(channelUri, null, null);
 
-            // add new channels
-            int channelNumber = 1;
-            for (Map.Entry<String, String> entry : CHANNEL_MAP.entrySet()) {
-                String serviceId = entry.getKey();
-                ContentValues values = new ContentValues();
-                values.put(TvContract.Channels.COLUMN_INPUT_ID, inputId);
-                values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
-                values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, entry.getValue());
-                values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
-                resolver.insert(TvContract.Channels.CONTENT_URI, values);
-                ++channelNumber;
+            if (mIsInitialScan) {
+                // delete old channels
+                resolver.delete(channelUri, null, null);
+
+                // add new channels
+                int channelNumber = 1;
+                for (Map.Entry<String, String> entry : CHANNEL_MAP.entrySet()) {
+                    String serviceId = entry.getKey();
+                    ContentValues values = new ContentValues();
+                    values.put(TvContract.Channels.COLUMN_INPUT_ID, inputId);
+                    values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
+                    values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, entry.getValue());
+                    values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
+                    resolver.insert(TvContract.Channels.CONTENT_URI, values);
+                    ++channelNumber;
+                }
             }
 
             // add new programs
