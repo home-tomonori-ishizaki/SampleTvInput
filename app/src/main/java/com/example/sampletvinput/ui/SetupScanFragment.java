@@ -11,6 +11,7 @@ import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.example.sampletvinput.data.Program;
 import com.example.sampletvinput.util.NhkUtils;
@@ -101,7 +103,11 @@ public class SetupScanFragment extends Fragment {
         }
     });
 
-    private class ScanTask extends AsyncTask<String, Void, Void> {
+    private class ScanTask extends AsyncTask<String, Void, Integer> {
+
+        private static final int RESULT_SUCCESS = 0;
+        private static final int RESULT_FAIL_REASON_API_KEY = 1;
+        private static final int RESULT_FAIL_REASON_OTHER = 2;
 
         private boolean mIsInitialScan = false;
 
@@ -114,8 +120,18 @@ public class SetupScanFragment extends Fragment {
         }
 
         @Override
-        protected Void doInBackground(String... params) {
+        protected Integer doInBackground(String... params) {
+            // check api key
+            String apiKey = PreferenceUtils.getApiKey(getActivity());
+            if (TextUtils.isEmpty(apiKey)) {
+                return RESULT_FAIL_REASON_API_KEY;
+            }
+
+            // check input id
             String inputId = params[0];
+            if (TextUtils.isEmpty(inputId)) {
+                return RESULT_FAIL_REASON_OTHER;
+            }
             Log.i(TAG, "inputId:" + inputId);
 
             ContentResolver resolver = getActivity().getContentResolver();
@@ -160,7 +176,7 @@ public class SetupScanFragment extends Fragment {
                 while (cursor.moveToNext()) {
                     long channelId = cursor.getLong(idxChannelId);
                     String serviceId = cursor.getString(idxServiceId);
-                    List<Program> programs = NhkUtils.getPrograms(serviceId, PreferenceUtils.getApiKey(getActivity()));
+                    List<Program> programs = NhkUtils.getPrograms(serviceId, apiKey);
                     if (programs == null) {
                         continue;
                     }
@@ -179,12 +195,18 @@ public class SetupScanFragment extends Fragment {
                     }
                 }
             }
-            return null;
+            return RESULT_SUCCESS;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            Log.i(TAG, "completed");
+        protected void onPostExecute(Integer result) {
+            if (result != RESULT_SUCCESS) {
+                String message = "Fail";
+                if (result == RESULT_FAIL_REASON_API_KEY) {
+                    message = "API Key is empty";
+                }
+                Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
+            }
             ((SampleInputSetupActivity)getActivity()).scanChannelsCompleted();
         }
     }
