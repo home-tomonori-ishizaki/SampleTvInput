@@ -7,22 +7,25 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ClassPresenterSelector;
-import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
 import android.support.v17.leanback.widget.OnItemViewClickedListener;
 import android.support.v17.leanback.widget.Presenter;
+import android.support.v17.leanback.widget.PresenterSelector;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.Log;
 
+import com.example.sampletvinput.model.IconHeaderItem;
 import com.example.sampletvinput.model.Program;
+import com.example.sampletvinput.presenter.IconHeaderItemPresenter;
 import com.example.sampletvinput.presenter.ProgramItemPresenter;
 import com.example.sampletvinput.presenter.StringItemPresenter;
 import com.example.sampletvinput.service.SampleInputService;
@@ -58,6 +61,13 @@ public class MainFragment extends BrowseFragment {
         // over title
         setHeadersState(HEADERS_ENABLED);
         setHeadersTransitionOnBackEnabled(true);
+
+        setHeaderPresenterSelector(new PresenterSelector() {
+            @Override
+            public Presenter getPresenter(Object o) {
+                return new IconHeaderItemPresenter();
+            }
+        });
     }
 
     private void loadRows() {
@@ -76,7 +86,7 @@ public class MainFragment extends BrowseFragment {
     private void loadSettingsRow() {
         ArrayObjectAdapter settingsAdapter = new ArrayObjectAdapter(new StringItemPresenter());
         settingsAdapter.add("Update programs");
-        mRowAdapter.add(new ListRow(new HeaderItem(0, "Settings"), settingsAdapter));
+        mRowAdapter.add(new ListRow(new IconHeaderItem(0, "Settings"), settingsAdapter));
     }
 
     private class LoadTask extends AsyncTask<Void, Void, Void> {
@@ -104,11 +114,12 @@ public class MainFragment extends BrowseFragment {
                     }
 
                     final String channelName = cursor.getString(idxDisplayName);
+                    final Uri logoUri = TvContract.buildChannelLogoUri(channelId);
 
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            mRowAdapter.add(new ListRow(new HeaderItem(0, channelName), programAdapter));
+                            mRowAdapter.add(new ListRow(new IconHeaderItem(0, channelName, logoUri), programAdapter));
                         }
                     });
                 }
