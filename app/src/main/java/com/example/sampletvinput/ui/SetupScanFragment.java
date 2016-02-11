@@ -21,6 +21,7 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.example.sampletvinput.data.NhkService;
 import com.example.sampletvinput.data.Program;
 import com.example.sampletvinput.util.NhkUtils;
 import com.example.sampletvinput.util.PreferenceUtils;
@@ -28,9 +29,8 @@ import com.example.sampletvinput.util.PreferenceUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 public class SetupScanFragment extends Fragment {
     private static final String TAG = SetupScanFragment.class.getSimpleName();
@@ -89,17 +89,16 @@ public class SetupScanFragment extends Fragment {
         super.onResume();
     }
 
-    private static final Map<String, String> CHANNEL_MAP = Collections.unmodifiableMap(new LinkedHashMap<String, String>()
-    {
+    private static final List<String> CHANNEL_LIST = Collections.unmodifiableList(new LinkedList<String>() {
         {
-            put("g1", "ＮＨＫ総合１");
-            put("e1", "ＮＨＫＥテレ１");
-            put("e4", "ＮＨＫワンセグ２");
-            put("s1", "ＮＨＫＢＳ１");
-            put("s3", "ＮＨＫＢＳプレミアム");
-            put("r1", "ＮＨＫラジオ第1");
-            put("r2", "ＮＨＫラジオ第2");
-            put("r3", "ＮＨＫＦＭ");
+            add("g1"); // ＮＨＫ総合１
+            add("e1"); // ＮＨＫＥテレ１
+            add("e4"); // ＮＨＫワンセグ２
+            add("s1"); // ＮＨＫＢＳ１
+            add("s3"); // ＮＨＫＢＳプレミアム
+            add("r1"); // ＨＫラジオ第1
+            add("r2"); // ＮＨＫラジオ第2
+            add("r3"); // ＮＨＫＦＭ
         }
     });
 
@@ -154,12 +153,15 @@ public class SetupScanFragment extends Fragment {
 
                 // add new channels
                 int channelNumber = 1;
-                for (Map.Entry<String, String> entry : CHANNEL_MAP.entrySet()) {
-                    String serviceId = entry.getKey();
+                for (String serviceId : CHANNEL_LIST) {
+                    NhkService service = NhkUtils.getService(serviceId, apiKey);
+                    Log.i(TAG, "name:" + service.name + " logo:" + service.logo.url);
+
+                    // add channel
                     ContentValues values = new ContentValues();
                     values.put(TvContract.Channels.COLUMN_INPUT_ID, inputId);
                     values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
-                    values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, entry.getValue());
+                    values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, service.name);
                     values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
                     resolver.insert(TvContract.Channels.CONTENT_URI, values);
                     ++channelNumber;

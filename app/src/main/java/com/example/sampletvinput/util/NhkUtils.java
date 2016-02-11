@@ -5,8 +5,10 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.example.sampletvinput.data.NhkNowOnAirList;
 import com.example.sampletvinput.data.NhkProgram;
 import com.example.sampletvinput.data.NhkProgramList;
+import com.example.sampletvinput.data.NhkService;
 import com.example.sampletvinput.data.Program;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -21,6 +23,7 @@ public class NhkUtils {
     private static final String TAG = NhkUtils.class.getSimpleName();
 
     private static final String BASE_URL_PROGRAM_LIST = "http://api.nhk.or.jp/v1/pg/list";
+    private static final String BASE_URL_ON_AIR = "http://api.nhk.or.jp/v1/pg/now";
     private static final String AREA_ID_TOKYO = "130";
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -98,5 +101,48 @@ public class NhkUtils {
             sGenreIndex = 0;
         }
         return genre;
+    }
+
+    public static NhkService getService(@NonNull String serviceId, @NonNull String apiKey) {
+        String url = BASE_URL_ON_AIR + "/" + AREA_ID_TOKYO + "/" + serviceId + ".json?key=" + apiKey;
+        Log.d(TAG, "request url:" + url);
+        String response = HttpUtils.get(url);
+
+        if (TextUtils.isEmpty(response)) {
+            return null;
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            NhkNowOnAirList onAirList = mapper.readValue(response, NhkNowOnAirList.class);
+            if (onAirList == null || onAirList.nowonair_list == null) {
+                Log.w(TAG, "can not get list");
+                return null;
+            }
+
+            Map<String, NhkProgram> programs = onAirList.nowonair_list.get(serviceId);
+            if (programs == null) {
+                Log.w(TAG, "can not get programs") ;
+                return null;
+            }
+
+            NhkProgram program = programs.get("present");
+            if (program == null) {
+                Log.w(TAG, "can not get present program");
+                return null;
+            }
+
+            if (program.service == null) {
+                Log.w(TAG, "can not get service");
+                return null;
+            }
+
+            return program.service;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

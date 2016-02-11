@@ -9,6 +9,7 @@ public class NhkProgram {
     public String id;
     public String event_id;
     public String start_time;
+    public NhkService service;
     public String end_time;
     public String title;
     public List<String> genres;
