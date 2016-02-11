@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.example.sampletvinput.data.NhkProgram;
 import com.example.sampletvinput.data.NhkProgramList;
 import com.example.sampletvinput.data.Program;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,7 +43,7 @@ public class NhkUtils {
                 return null;
             }
 
-            List<NhkProgramList.NhkProgram> programList = nhkPrograms.list.get(serviceId);
+            List<NhkProgram> programList = nhkPrograms.list.get(serviceId);
             if (programList == null) {
                 Log.d(TAG, "can not found programs of " + serviceId);
                 return null;
@@ -50,7 +51,7 @@ public class NhkUtils {
 
             Log.d(TAG, "program size: " + programList.size());
             List<Program> programs = new LinkedList<>();
-            for (NhkProgramList.NhkProgram p : programList) {
+            for (NhkProgram p : programList) {
                 programs.add(createProgram(p));
             }
             return programs;
@@ -62,7 +63,7 @@ public class NhkUtils {
         return null;
     }
 
-    private static Program createProgram(NhkProgramList.NhkProgram nhk) {
+    private static Program createProgram(NhkProgram nhk) {
         return new Program()
                 .setName(nhk.title)
                 .setStartTime(nhk.start_time)
