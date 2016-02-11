@@ -134,10 +134,25 @@ public class SetupScanFragment extends Fragment {
             Log.i(TAG, "inputId:" + inputId);
 
             ContentResolver resolver = getActivity().getContentResolver();
+            Uri channelUri = TvContract.buildChannelsUriForInput(inputId);
 
+            // delete programs for old channels
+            deletePrograms(resolver, channelUri);
+
+            if (mIsInitialScan) {
+                // delete old channels and add new channels
+                resolver.delete(channelUri, null, null);
+                addChannels(resolver, inputId, apiKey);
+            }
+
+            addPrograms(resolver, channelUri, apiKey);
+
+            return RESULT_SUCCESS;
+        }
+
+        private void deletePrograms(ContentResolver resolver, Uri channelUri) {
             // delete old programs,
             // need to loop for each channel because SecurityException happens if selection is set
-            Uri channelUri = TvContract.buildChannelsUriForInput(inputId);
             try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
                 int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
                 while (cursor.moveToNext()) {
@@ -146,28 +161,26 @@ public class SetupScanFragment extends Fragment {
                     resolver.delete(programUri, null, null);
                 }
             }
+        }
 
-            if (mIsInitialScan) {
-                // delete old channels
-                resolver.delete(channelUri, null, null);
+        private void addChannels(ContentResolver resolver, String inputId, String apiKey) {
+            int channelNumber = 1;
+            for (String serviceId : CHANNEL_LIST) {
+                NhkService service = NhkUtils.getService(serviceId, apiKey);
+                Log.i(TAG, "name:" + service.name + " logo:" + service.logo.url);
 
-                // add new channels
-                int channelNumber = 1;
-                for (String serviceId : CHANNEL_LIST) {
-                    NhkService service = NhkUtils.getService(serviceId, apiKey);
-                    Log.i(TAG, "name:" + service.name + " logo:" + service.logo.url);
-
-                    // add channel
-                    ContentValues values = new ContentValues();
-                    values.put(TvContract.Channels.COLUMN_INPUT_ID, inputId);
-                    values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
-                    values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, service.name);
-                    values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
-                    resolver.insert(TvContract.Channels.CONTENT_URI, values);
-                    ++channelNumber;
-                }
+                // add channel
+                ContentValues values = new ContentValues();
+                values.put(TvContract.Channels.COLUMN_INPUT_ID, inputId);
+                values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
+                values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, service.name);
+                values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
+                resolver.insert(TvContract.Channels.CONTENT_URI, values);
+                ++channelNumber;
             }
+        }
 
+        private void addPrograms(ContentResolver resolver,Uri channelUri, String apiKey) {
             // add new programs
             try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
                 // COLUMN_SEARCHABLE is supported above api-level 23(M)
@@ -197,7 +210,6 @@ public class SetupScanFragment extends Fragment {
                     }
                 }
             }
-            return RESULT_SUCCESS;
         }
 
         @Override
