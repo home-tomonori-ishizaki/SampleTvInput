@@ -2,12 +2,12 @@ package com.example.sampletvinput.presenter;
 
 import android.content.Context;
 import android.support.v17.leanback.widget.BaseCardView;
-import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
 import android.view.ViewGroup;
 
 import com.example.sampletvinput.R;
 import com.example.sampletvinput.model.Program;
+import com.example.sampletvinput.view.ProgramCardView;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,21 +19,17 @@ public class ProgramItemPresenter extends Presenter {
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
         Context context = parent.getContext();
-        ImageCardView cardView = new ImageCardView(context);
+        ProgramCardView cardView = new ProgramCardView(context);
         cardView.setCardType(BaseCardView.CARD_TYPE_INFO_UNDER_WITH_EXTRA);
         cardView.setFocusable(true);
         cardView.setFocusableInTouchMode(true);
-
-        int width = context.getResources().getDimensionPixelSize(R.dimen.card_item_width);
-        int height = context.getResources().getDimensionPixelSize(R.dimen.card_item_height);
-        cardView.setMainImageDimensions(width, height);
 
         return new ViewHolder(cardView);
     }
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, Object item) {
-        ImageCardView cardView = (ImageCardView)viewHolder.view;
+        ProgramCardView cardView = (ProgramCardView)viewHolder.view;
         Program program = (Program)item;
 
         cardView.setTitleText(program.getName());
