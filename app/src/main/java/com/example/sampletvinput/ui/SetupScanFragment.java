@@ -23,7 +23,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.sampletvinput.data.NhkService;
-import com.example.sampletvinput.data.Program;
+import com.example.sampletvinput.model.Program;
 import com.example.sampletvinput.util.HttpUtils;
 import com.example.sampletvinput.util.NhkUtils;
 import com.example.sampletvinput.util.PreferenceUtils;

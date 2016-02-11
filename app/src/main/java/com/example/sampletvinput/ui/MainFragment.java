@@ -22,14 +22,13 @@ import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.Log;
 
-import com.example.sampletvinput.data.Program;
+import com.example.sampletvinput.model.Program;
 import com.example.sampletvinput.presenter.ProgramItemPresenter;
 import com.example.sampletvinput.presenter.StringItemPresenter;
 import com.example.sampletvinput.service.SampleInputService;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 public class MainFragment extends BrowseFragment {
     private static final String TAG = BrowseFragment.class.getSimpleName();

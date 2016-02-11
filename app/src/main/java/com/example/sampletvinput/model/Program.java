@@ -1,4 +1,4 @@
-package com.example.sampletvinput.data;
+package com.example.sampletvinput.model;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

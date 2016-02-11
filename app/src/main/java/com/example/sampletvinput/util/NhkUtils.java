@@ -9,7 +9,7 @@ import com.example.sampletvinput.data.NhkNowOnAirList;
 import com.example.sampletvinput.data.NhkProgram;
 import com.example.sampletvinput.data.NhkProgramList;
 import com.example.sampletvinput.data.NhkService;
-import com.example.sampletvinput.data.Program;
+import com.example.sampletvinput.model.Program;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;

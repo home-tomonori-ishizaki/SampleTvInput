@@ -7,7 +7,7 @@ import android.support.v17.leanback.widget.Presenter;
 import android.view.ViewGroup;
 
 import com.example.sampletvinput.R;
-import com.example.sampletvinput.data.Program;
+import com.example.sampletvinput.model.Program;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
