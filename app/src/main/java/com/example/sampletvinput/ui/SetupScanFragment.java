@@ -3,6 +3,7 @@ package com.example.sampletvinput.ui;
 import android.app.Fragment;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
@@ -23,14 +24,18 @@ import android.widget.Toast;
 
 import com.example.sampletvinput.data.NhkService;
 import com.example.sampletvinput.data.Program;
+import com.example.sampletvinput.util.HttpUtils;
 import com.example.sampletvinput.util.NhkUtils;
 import com.example.sampletvinput.util.PreferenceUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class SetupScanFragment extends Fragment {
     private static final String TAG = SetupScanFragment.class.getSimpleName();
@@ -142,7 +147,7 @@ public class SetupScanFragment extends Fragment {
             if (mIsInitialScan) {
                 // delete old channels and add new channels
                 resolver.delete(channelUri, null, null);
-                addChannels(resolver, inputId, apiKey);
+                addChannels(resolver, channelUri, inputId, apiKey);
             }
 
             addPrograms(resolver, channelUri, apiKey);
@@ -163,11 +168,18 @@ public class SetupScanFragment extends Fragment {
             }
         }
 
-        private void addChannels(ContentResolver resolver, String inputId, String apiKey) {
+        private void addChannels(ContentResolver resolver, Uri channelUri, String inputId, String apiKey) {
+            Map<String, String> logoMap = new HashMap<>();
+
+            // add channels
             int channelNumber = 1;
             for (String serviceId : CHANNEL_LIST) {
                 NhkService service = NhkUtils.getService(serviceId, apiKey);
-                Log.i(TAG, "name:" + service.name + " logo:" + service.logo.url);
+                if (service == null || service.logo == null || service.logo.url == null) {
+                    continue;
+                }
+                //Log.i(TAG, "name:" + service.name + " logo:" + service.logo.url);
+                logoMap.put(serviceId, service.logo.url);
 
                 // add channel
                 ContentValues values = new ContentValues();
@@ -177,6 +189,36 @@ public class SetupScanFragment extends Fragment {
                 values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
                 resolver.insert(TvContract.Channels.CONTENT_URI, values);
                 ++channelNumber;
+            }
+
+            // add logo
+            try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
+                int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
+                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+                while (cursor.moveToNext()) {
+                    String serviceId = cursor.getString(idxServiceId);
+                    String logoUrl = logoMap.get(serviceId);
+                    Log.i(TAG, "serviceId:" + serviceId + " logo:" + logoUrl);
+                    if (logoUrl != null) {
+                        long channelId = cursor.getLong(idxChannelId);
+                        byte[] logo = HttpUtils.getBytes(logoUrl);
+                        Log.i(TAG, "logo size:" + logo.length);
+                        writeChannelLogo(resolver, channelId, logo);
+                    }
+                }
+            }
+        }
+
+        private void writeChannelLogo(ContentResolver resolver, long channelId, byte[] logo) {
+            Uri channelLogoUri = TvContract.buildChannelLogoUri(channelId);
+            try {
+                AssetFileDescriptor fd = resolver.openAssetFileDescriptor(channelLogoUri, "rw");
+                OutputStream os = fd.createOutputStream();
+                os.write(logo);
+                os.close();
+                fd.close();
+            } catch (IOException e) {
+                // Handle error cases.
             }
         }
 
