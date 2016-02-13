@@ -24,6 +24,7 @@ public class NhkUtils {
 
     private static final String BASE_URL_PROGRAM_LIST = "http://api.nhk.or.jp/v1/pg/list";
     private static final String BASE_URL_ON_AIR = "http://api.nhk.or.jp/v1/pg/now";
+    private static final String BASE_URL_PROGRAM_INFO = "http://api.nhk.or.jp/v1/pg/info";
     private static final String AREA_ID_TOKYO = "130";
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -67,12 +68,52 @@ public class NhkUtils {
         return null;
     }
 
+    public static Program getProgram(long programId, String serviceId, String apiKey)
+            throws HttpUtils.BadRequestException, HttpUtils.UnauthorizedException {
+        String today = DATE_FORMAT.format(new Date());
+        String url = BASE_URL_PROGRAM_INFO + "/" + AREA_ID_TOKYO + "/" + serviceId + "/" + programId + ".json?key=" + apiKey;
+        Log.d(TAG, "request url:" + url);
+        String response = HttpUtils.get(url);
+
+        if (TextUtils.isEmpty(response)) {
+            return null;
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            NhkProgramList nhkPrograms = mapper.readValue(response, NhkProgramList.class);
+            if (nhkPrograms == null || nhkPrograms.list == null || nhkPrograms.list.isEmpty()) {
+                Log.d(TAG, "can not get list");
+                return null;
+            }
+
+            List<NhkProgram> programList = nhkPrograms.list.get(serviceId);
+            if (programList == null) {
+                Log.d(TAG, "can not found programs of " + serviceId);
+                return null;
+            }
+
+            Log.d(TAG, "program size: " + programList.size());
+            if (programList.size() > 0) {
+                return createProgram(programList.get(0));
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     private static Program createProgram(NhkProgram nhk) {
         return new Program()
+                .setId(nhk.id)
                 .setName(nhk.title)
                 .setStartTime(nhk.start_time)
                 .setEndTime(nhk.end_time)
-                .setGenre(getGenre());
+                .setGenre(getGenre())
+                .setThumbnailUrl(nhk.program_logo != null ? nhk.program_logo.url : null)
+                .setLinkUrl(nhk.program_url);
     }
 
     private static final String[] SUPPORTED_GENRES = new String[] {

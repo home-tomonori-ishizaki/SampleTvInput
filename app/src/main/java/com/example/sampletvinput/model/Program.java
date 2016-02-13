@@ -7,10 +7,22 @@ import java.util.Date;
 public class Program {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 
+    private long mId;
     private String mName;
     private long mStartTime;
     private long mEndTime;
     private String mGenre;
+    private String mThumbnailUrl;
+    private String mLinkUrl;
+
+    public Program setId(long id) {
+        mId = id;
+        return this;
+    }
+
+    public long getId() {
+        return mId;
+    }
 
     public Program setName(String name) {
         mName = name;
@@ -66,5 +78,23 @@ public class Program {
 
     public String getGenre() {
         return mGenre;
+    }
+
+    public Program setThumbnailUrl(String url) {
+        mThumbnailUrl = url;
+        return this;
+    }
+
+    public String getThumbnailUrl() {
+        return mThumbnailUrl;
+    }
+
+    public Program setLinkUrl(String url) {
+        mLinkUrl = url;
+        return this;
+    }
+
+    public String getLinkUrl() {
+        return mLinkUrl;
     }
 }
