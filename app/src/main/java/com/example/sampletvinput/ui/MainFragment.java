@@ -40,6 +40,8 @@ public class MainFragment extends BrowseFragment {
     private Handler mHandler = new Handler();
     private int REQUEST_ID_UPDATE_PROGRAM = 0;
 
+    private static final String SETTING_UPDATE_PROGRAMS = "Update programs";
+
     public MainFragment() {
     }
 
@@ -85,7 +87,7 @@ public class MainFragment extends BrowseFragment {
 
     private void loadSettingsRow() {
         ArrayObjectAdapter settingsAdapter = new ArrayObjectAdapter(new StringItemPresenter());
-        settingsAdapter.add("Update programs");
+        settingsAdapter.add(SETTING_UPDATE_PROGRAMS);
         mRowAdapter.add(new ListRow(new IconHeaderItem(0, "Settings"), settingsAdapter));
     }
 
@@ -161,17 +163,21 @@ public class MainFragment extends BrowseFragment {
             public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                                       RowPresenter.ViewHolder rowViewHolder, Row row) {
                 if (item instanceof String) {
-                    if (item == "Update programs") {
-                        Intent intent = new Intent(getActivity(), SampleInputSetupActivity.class);
-                        intent.putExtra(SampleInputSetupActivity.MODE, SampleInputSetupActivity.MODE_UPDATE);
-                        // ComponentName is needed by TV Input Service
-                        ComponentName component = new ComponentName(getActivity().getApplicationContext(), SampleInputService.class);
-                        intent.putExtra(TvInputInfo.EXTRA_INPUT_ID, TvContract.buildInputId(component));
-                        startActivityForResult(intent, REQUEST_ID_UPDATE_PROGRAM);
+                    if (item == SETTING_UPDATE_PROGRAMS) {
+                        updatePrograms();
                     }
                 }
             }
         });
+    }
+
+    private void updatePrograms() {
+        Intent intent = new Intent(getActivity(), SampleInputSetupActivity.class);
+        intent.putExtra(SampleInputSetupActivity.MODE, SampleInputSetupActivity.MODE_UPDATE);
+        // ComponentName is needed by TV Input Service
+        ComponentName component = new ComponentName(getActivity().getApplicationContext(), SampleInputService.class);
+        intent.putExtra(TvInputInfo.EXTRA_INPUT_ID, TvContract.buildInputId(component));
+        startActivityForResult(intent, REQUEST_ID_UPDATE_PROGRAM);
     }
 
     @Override
