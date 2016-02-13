@@ -144,13 +144,19 @@ public class SetupScanFragment extends Fragment {
             // delete programs for old channels
             deletePrograms(resolver, channelUri);
 
-            if (mIsInitialScan) {
-                // delete old channels and add new channels
-                resolver.delete(channelUri, null, null);
-                addChannels(resolver, channelUri, inputId, apiKey);
-            }
+            try {
+                if (mIsInitialScan) {
+                    // delete old channels and add new channels
+                    resolver.delete(channelUri, null, null);
+                    addChannels(resolver, channelUri, inputId, apiKey);
+                }
+                addPrograms(resolver, channelUri, apiKey);
 
-            addPrograms(resolver, channelUri, apiKey);
+            } catch (HttpUtils.BadRequestException e) {
+                return RESULT_FAIL_REASON_OTHER;
+            } catch (HttpUtils.UnauthorizedException e) {
+                return RESULT_FAIL_REASON_API_KEY;
+            }
 
             return RESULT_SUCCESS;
         }
@@ -168,7 +174,8 @@ public class SetupScanFragment extends Fragment {
             }
         }
 
-        private void addChannels(ContentResolver resolver, Uri channelUri, String inputId, String apiKey) {
+        private void addChannels(ContentResolver resolver, Uri channelUri, String inputId, String apiKey)
+                throws HttpUtils.UnauthorizedException, HttpUtils.BadRequestException {
             Map<String, String> logoMap = new HashMap<>();
 
             // add channels
@@ -222,7 +229,8 @@ public class SetupScanFragment extends Fragment {
             }
         }
 
-        private void addPrograms(ContentResolver resolver,Uri channelUri, String apiKey) {
+        private void addPrograms(ContentResolver resolver,Uri channelUri, String apiKey)
+                throws HttpUtils.BadRequestException, HttpUtils.UnauthorizedException {
             // add new programs
             try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
                 // COLUMN_SEARCHABLE is supported above api-level 23(M)
@@ -257,9 +265,9 @@ public class SetupScanFragment extends Fragment {
         @Override
         protected void onPostExecute(Integer result) {
             if (result != RESULT_SUCCESS) {
-                String message = "Fail";
+                String message = "Fail, current time may be invalid";
                 if (result == RESULT_FAIL_REASON_API_KEY) {
-                    message = "API Key is empty";
+                    message = "API Key is empty or invalid";
                 }
                 Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
             }

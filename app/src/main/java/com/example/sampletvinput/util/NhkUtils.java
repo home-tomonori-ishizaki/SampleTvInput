@@ -28,7 +28,8 @@ public class NhkUtils {
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
-    public static List<Program> getPrograms(@NonNull String serviceId, @NonNull String apiKey) {
+    public static List<Program> getPrograms(@NonNull String serviceId, @NonNull String apiKey)
+            throws HttpUtils.BadRequestException, HttpUtils.UnauthorizedException {
         String today = DATE_FORMAT.format(new Date());
         String url = BASE_URL_PROGRAM_LIST + "/" + AREA_ID_TOKYO + "/" + serviceId + "/" + today+ ".json?key=" + apiKey;
         Log.d(TAG, "request url:" + url);
@@ -103,7 +104,8 @@ public class NhkUtils {
         return genre;
     }
 
-    public static NhkService getService(@NonNull String serviceId, @NonNull String apiKey) {
+    public static NhkService getService(@NonNull String serviceId, @NonNull String apiKey)
+            throws HttpUtils.BadRequestException, HttpUtils.UnauthorizedException {
         String url = BASE_URL_ON_AIR + "/" + AREA_ID_TOKYO + "/" + serviceId + ".json?key=" + apiKey;
         Log.d(TAG, "request url:" + url);
         String response = HttpUtils.get(url);
