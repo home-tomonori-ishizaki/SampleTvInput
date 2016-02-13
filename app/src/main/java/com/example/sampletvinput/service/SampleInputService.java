@@ -2,17 +2,20 @@ package com.example.sampletvinput.service;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
-import android.database.Cursor;
 import android.media.MediaPlayer;
-import android.media.tv.TvContract;
 import android.media.tv.TvInputManager;
 import android.media.tv.TvInputService;
 import android.net.Uri;
+import android.util.Log;
 import android.view.Surface;
+
+import com.example.sampletvinput.R;
 
 import java.io.IOException;
 
 public class SampleInputService extends TvInputService {
+    private static String TAG = SampleInputService.class.getSimpleName();
+
     @Override
     public Session onCreateSession(String inputId) {
         return new SampleSessionImpl(this);
@@ -57,8 +60,9 @@ public class SampleInputService extends TvInputService {
 
         @Override
         public boolean onTune(Uri channelUri) {
-            return false;
-            //return startPlayback(0);
+            //return false;
+            Log.i(TAG, "onTune(" + channelUri + ")");
+            return startPlayback(R.raw.video);
         }
 
         @Override
@@ -106,6 +110,7 @@ public class SampleInputService extends TvInputService {
                 mPlayer.prepare();
                 mPlayer.start();
             } catch (IOException e) {
+                e.printStackTrace();
                 return false;
             } finally {
                 try {
