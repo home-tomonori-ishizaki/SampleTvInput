@@ -1,8 +1,10 @@
 package com.example.sampletvinput.ui;
 
 import android.app.Fragment;
+import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.OperationApplicationException;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.media.tv.TvContract;
@@ -12,6 +14,7 @@ import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -31,6 +34,7 @@ import com.example.sampletvinput.util.PreferenceUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -150,7 +154,10 @@ public class SetupScanFragment extends Fragment {
                     resolver.delete(channelUri, null, null);
                     addChannels(resolver, channelUri, inputId, apiKey);
                 }
+                long start = System.currentTimeMillis();
                 addPrograms(resolver, channelUri, apiKey);
+                long end = System.currentTimeMillis();
+                Log.w(TAG, "Add programs takes " + (end - start) + "ms");
 
             } catch (HttpUtils.BadRequestException e) {
                 return RESULT_FAIL_REASON_OTHER;
@@ -229,8 +236,9 @@ public class SetupScanFragment extends Fragment {
             }
         }
 
-        private void addPrograms(ContentResolver resolver,Uri channelUri, String apiKey)
+        private void addPrograms(ContentResolver resolver, Uri channelUri, String apiKey)
                 throws HttpUtils.BadRequestException, HttpUtils.UnauthorizedException {
+
             // add new programs
             try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
                 // COLUMN_SEARCHABLE is supported above api-level 23(M)
@@ -238,6 +246,10 @@ public class SetupScanFragment extends Fragment {
 
                 int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
                 int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+
+                int count = 0;
+                ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+
                 while (cursor.moveToNext()) {
                     long channelId = cursor.getLong(idxChannelId);
                     String serviceId = cursor.getString(idxServiceId);
@@ -245,21 +257,41 @@ public class SetupScanFragment extends Fragment {
                     if (programs == null) {
                         continue;
                     }
-                    ContentValues  values = new ContentValues();
-                    values.put(TvContract.Programs.COLUMN_CHANNEL_ID, channelId);
-                    if (hasSearchable) {
-                        values.put(TvContract.Programs.COLUMN_SEARCHABLE, 1);
-                    }
 
                     for (Program program : programs) {
-                        values.put(TvContract.Programs.COLUMN_TITLE, program.getName());
-                        values.put(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, program.getStartTime());
-                        values.put(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, program.getEndTime());
-                        values.put(TvContract.Programs.COLUMN_CANONICAL_GENRE, program.getGenre());
-                        resolver.insert(TvContract.Programs.CONTENT_URI, values);
+
+                        ContentProviderOperation.Builder builder =
+                                ContentProviderOperation.newInsert(TvContract.Programs.CONTENT_URI)
+                                        .withValue(TvContract.Programs.COLUMN_CHANNEL_ID, channelId)
+                                        .withValue(TvContract.Programs.COLUMN_TITLE, program.getName())
+                                        .withValue(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, program.getStartTime())
+                                        .withValue(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, program.getEndTime())
+                                        .withValue(TvContract.Programs.COLUMN_CANONICAL_GENRE, program.getGenre());
+                        if (hasSearchable) {
+                            builder.withValue(TvContract.Programs.COLUMN_SEARCHABLE, 1);
+                        }
+                        ops.add(builder.build());
+
+                        ++count;
+                        if (count == 100) {
+                            applyBatch(resolver, ops);
+                            count = 0;
+                        }
                     }
                 }
+                if (ops.size() > 0) {
+                    applyBatch(resolver, ops);
+                }
             }
+        }
+
+        private void applyBatch(ContentResolver resolver, ArrayList<ContentProviderOperation> ops) {
+            try {
+                resolver.applyBatch(TvContract.AUTHORITY, ops);
+            } catch (RemoteException | OperationApplicationException e) {
+                e.printStackTrace();
+            }
+            ops.clear();
         }
 
         @Override
