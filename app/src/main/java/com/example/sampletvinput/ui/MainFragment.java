@@ -41,6 +41,7 @@ public class MainFragment extends BrowseFragment {
     private int REQUEST_ID_UPDATE_PROGRAM = 0;
 
     private static final String SETTING_UPDATE_PROGRAMS = "Update programs";
+    private static final String SETTING_UPDATE_CURRENT_PROGRAMS = "Update current programs";
 
     public MainFragment() {
     }
@@ -88,6 +89,7 @@ public class MainFragment extends BrowseFragment {
     private void loadSettingsRow() {
         ArrayObjectAdapter settingsAdapter = new ArrayObjectAdapter(new StringItemPresenter());
         settingsAdapter.add(SETTING_UPDATE_PROGRAMS);
+        settingsAdapter.add(SETTING_UPDATE_CURRENT_PROGRAMS);
         mRowAdapter.add(new ListRow(new IconHeaderItem(0, "Settings"), settingsAdapter));
     }
 
@@ -164,16 +166,18 @@ public class MainFragment extends BrowseFragment {
                                       RowPresenter.ViewHolder rowViewHolder, Row row) {
                 if (item instanceof String) {
                     if (item == SETTING_UPDATE_PROGRAMS) {
-                        updatePrograms();
+                        updatePrograms(SampleInputSetupActivity.MODE_UPDATE);
+                    } else if (item == SETTING_UPDATE_CURRENT_PROGRAMS) {
+                        updatePrograms(SampleInputSetupActivity.MODE_UPDATE_ONLY_CURRENT);
                     }
                 }
             }
         });
     }
 
-    private void updatePrograms() {
+    private void updatePrograms(int mode) {
         Intent intent = new Intent(getActivity(), SampleInputSetupActivity.class);
-        intent.putExtra(SampleInputSetupActivity.MODE, SampleInputSetupActivity.MODE_UPDATE);
+        intent.putExtra(SampleInputSetupActivity.MODE, mode);
         // ComponentName is needed by TV Input Service
         ComponentName component = new ComponentName(getActivity().getApplicationContext(), SampleInputService.class);
         intent.putExtra(TvInputInfo.EXTRA_INPUT_ID, TvContract.buildInputId(component));

@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.OperationApplicationException;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
+import android.media.tv.TvContentRating;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.net.Uri;
@@ -37,6 +38,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +49,10 @@ public class SetupScanFragment extends Fragment {
     private static final int SPINNER_WIDTH = 100;
     private static final int SPINNER_HEIGHT = 100;
 
-    public static SetupScanFragment newInstance(boolean isInitialScan) {
+    public static SetupScanFragment newInstance(int mode) {
         SetupScanFragment fragment = new SetupScanFragment();
         Bundle args = new Bundle();
-        args.putBoolean("mode", isInitialScan);
+        args.putInt("mode", mode);
         fragment.setArguments(args);
         return fragment;
     }
@@ -93,8 +95,8 @@ public class SetupScanFragment extends Fragment {
     @Override
     public void onResume() {
         Bundle args = getArguments();
-        boolean isInitialScan = args.getBoolean("mode");
-        new ScanTask(isInitialScan).execute(getActivity().getIntent().getStringExtra(TvInputInfo.EXTRA_INPUT_ID));
+        int mode = args.getInt("mode");
+        new ScanTask(mode).execute(getActivity().getIntent().getStringExtra(TvInputInfo.EXTRA_INPUT_ID));
         super.onResume();
     }
 
@@ -117,10 +119,10 @@ public class SetupScanFragment extends Fragment {
         private static final int RESULT_FAIL_REASON_API_KEY = 1;
         private static final int RESULT_FAIL_REASON_OTHER = 2;
 
-        private boolean mIsInitialScan = false;
+        private int mMode = SampleInputSetupActivity.MODE_NONE;
 
-        public ScanTask(boolean isInitialScan) {
-            mIsInitialScan = isInitialScan;
+        public ScanTask(int mode) {
+            mMode = mode;
         }
 
         @Override
@@ -145,19 +147,22 @@ public class SetupScanFragment extends Fragment {
             ContentResolver resolver = getActivity().getContentResolver();
             Uri channelUri = TvContract.buildChannelsUriForInput(inputId);
 
-            // delete programs for old channels
-            deletePrograms(resolver, channelUri);
-
             try {
-                if (mIsInitialScan) {
+                if (mMode == SampleInputSetupActivity.MODE_NONE) {
+                    // delete programs for old channels
+                    deletePrograms(resolver, channelUri);
                     // delete old channels and add new channels
                     resolver.delete(channelUri, null, null);
+                    // add programs
                     addChannels(resolver, channelUri, inputId, apiKey);
+                } else if (mMode == SampleInputSetupActivity.MODE_UPDATE) {
+                    // delete programs for old channels
+                    deletePrograms(resolver, channelUri);
+                    // add programs
+                    addPrograms(resolver, channelUri, apiKey);
+                } else if (mMode == SampleInputSetupActivity.MODE_UPDATE_ONLY_CURRENT) {
+                    updateCurrentPrograms(resolver, channelUri, apiKey);
                 }
-                long start = System.currentTimeMillis();
-                addPrograms(resolver, channelUri, apiKey);
-                long end = System.currentTimeMillis();
-                Log.w(TAG, "Add programs takes " + (end - start) + "ms");
 
             } catch (HttpUtils.BadRequestException e) {
                 return RESULT_FAIL_REASON_OTHER;
@@ -266,7 +271,8 @@ public class SetupScanFragment extends Fragment {
                                         .withValue(TvContract.Programs.COLUMN_TITLE, program.getName())
                                         .withValue(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, program.getStartTime())
                                         .withValue(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, program.getEndTime())
-                                        .withValue(TvContract.Programs.COLUMN_CANONICAL_GENRE, program.getGenre());
+                                        .withValue(TvContract.Programs.COLUMN_CANONICAL_GENRE, program.getGenre())
+                                        .withValue(TvContract.Programs.COLUMN_VERSION_NUMBER, program.getId());
                         if (hasSearchable) {
                             builder.withValue(TvContract.Programs.COLUMN_SEARCHABLE, 1);
                         }
@@ -292,6 +298,69 @@ public class SetupScanFragment extends Fragment {
                 e.printStackTrace();
             }
             ops.clear();
+        }
+
+        private void updateCurrentPrograms(ContentResolver resolver, Uri channelUri, String apiKey) {
+            // get channel id list
+            Map<Long, String> channelIdMap = new LinkedHashMap<>();
+            try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
+                int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
+                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+                while (cursor.moveToNext()) {
+                    long channelId = cursor.getLong(idxChannelId);
+                    String serviceId = cursor.getString(idxServiceId);
+                    if (channelId > 0) {
+                        channelIdMap.put(channelId, serviceId);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // COLUMN_APP_LINK_XXX are supported above api-level 23(M)
+            boolean hasAppLink = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
+
+            long current = System.currentTimeMillis();
+            for (Map.Entry<Long, String> entry : channelIdMap.entrySet()) {
+                long channelId = entry.getKey();
+                String serviceId = entry.getValue();
+                Uri programUri = TvContract.buildProgramsUriForChannel(channelId, current, current + 1000);
+                try (Cursor cursor = resolver.query(programUri, null, null, null, null)) {
+                    // update only first program
+                    if (cursor.moveToNext()) {
+                        int idxId = cursor.getColumnIndexOrThrow(TvContract.Programs._ID);
+                        int idxVersion = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_VERSION_NUMBER);
+
+                        long id = cursor.getLong(idxId);
+                        long programId = cursor.getLong(idxVersion);
+                        Program program = NhkUtils.getProgram(programId, serviceId, apiKey);
+                        if (program == null) {
+                            continue;
+                        }
+                        String thumbnailUrl = program.getThumbnailUrl();
+                        String linkUrl = program.getLinkUrl();
+
+                        // update thumbnail url
+                        if (thumbnailUrl != null) {
+                            ContentValues values = new ContentValues();
+                            values.put(TvContract.Programs.COLUMN_POSTER_ART_URI, thumbnailUrl);
+                            resolver.update(TvContract.buildProgramUri(id), values, null, null);
+                        }
+
+                        // update app link
+                        if (hasAppLink && linkUrl != null) {
+                            ContentValues values = new ContentValues();
+                            values.put(TvContract.Channels.COLUMN_APP_LINK_INTENT_URI, linkUrl);
+                            if (thumbnailUrl != null) {
+                                values.put(TvContract.Channels.COLUMN_APP_LINK_POSTER_ART_URI, thumbnailUrl);
+                            }
+                            resolver.update(TvContract.buildChannelUri(channelId), values, null, null);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         @Override
