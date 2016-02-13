@@ -9,11 +9,5 @@ public class NhkService {
     public String name;
 
     @JsonProperty("logo_s")
-    public Logo logo;
-
-    public static class Logo {
-        public String url;
-        public int width;
-        public int height;
-    }
+    public NhkLogo logo;
 }
