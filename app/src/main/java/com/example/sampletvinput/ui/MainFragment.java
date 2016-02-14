@@ -170,6 +170,8 @@ public class MainFragment extends BrowseFragment {
                     } else if (item == SETTING_UPDATE_CURRENT_PROGRAMS) {
                         updatePrograms(SampleInputSetupActivity.MODE_UPDATE_ONLY_CURRENT);
                     }
+                } else if (item instanceof Program) {
+                    startDetailsActivity((Program)item);
                 }
             }
         });
@@ -193,5 +195,11 @@ public class MainFragment extends BrowseFragment {
             loadSettingsRow();
             new LoadTask().execute();
         }
+    }
+
+    private void startDetailsActivity(Program program) {
+        Intent intent = new Intent(getActivity(), ProgramDetailsActivity.class);
+        intent.putExtra(ProgramDetailsActivity.EXTRA_PROGRAM, program);
+        startActivity(intent);
     }
 }

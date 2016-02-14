@@ -32,6 +32,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.ProgramDetailsActivity">
+        </activity>
+
         <service
             android:name=".service.SampleInputService"
             android:label="@string/sample_input_label"
