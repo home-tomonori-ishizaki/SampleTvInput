@@ -12,6 +12,7 @@ public class NhkProgram {
     public NhkService service;
     public String end_time;
     public String title;
+    public String subtitle;
     public List<String> genres;
     public NhkLogo program_logo;
     public String program_url;

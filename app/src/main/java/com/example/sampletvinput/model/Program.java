@@ -10,11 +10,13 @@ public class Program implements Serializable {
 
     private long mId;
     private String mName;
+    private String mDescription;
     private long mStartTime;
     private long mEndTime;
     private String mGenre;
     private String mThumbnailUrl;
     private String mLinkUrl;
+    private String mServiceId;
 
     public Program setId(long id) {
         mId = id;
@@ -32,6 +34,15 @@ public class Program implements Serializable {
 
     public String getName() {
         return mName;
+    }
+
+    public Program setDescription(String description) {
+        mDescription = description;
+        return this;
+    }
+
+    public String getDescription() {
+        return mDescription;
     }
 
     public Program setStartTime(String startTime) {
@@ -97,5 +108,14 @@ public class Program implements Serializable {
 
     public String getLinkUrl() {
         return mLinkUrl;
+    }
+
+    public Program setServiceId(String serviceId) {
+        mServiceId = serviceId;
+        return this;
+    }
+
+    public String getServiceId() {
+        return mServiceId;
     }
 }

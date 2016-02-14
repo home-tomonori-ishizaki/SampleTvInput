@@ -109,11 +109,13 @@ public class NhkUtils {
         return new Program()
                 .setId(nhk.id)
                 .setName(nhk.title)
+                .setDescription(nhk.subtitle)
                 .setStartTime(nhk.start_time)
                 .setEndTime(nhk.end_time)
                 .setGenre(getGenre())
                 .setThumbnailUrl(nhk.program_logo != null ? nhk.program_logo.url : null)
-                .setLinkUrl(nhk.program_url);
+                .setLinkUrl(nhk.program_url)
+                .setServiceId(nhk.service != null ? nhk.service.id : null);
     }
 
     private static final String[] SUPPORTED_GENRES = new String[] {

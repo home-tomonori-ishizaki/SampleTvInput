@@ -270,6 +270,7 @@ public class SetupScanFragment extends Fragment {
                                 ContentProviderOperation.newInsert(TvContract.Programs.CONTENT_URI)
                                         .withValue(TvContract.Programs.COLUMN_CHANNEL_ID, channelId)
                                         .withValue(TvContract.Programs.COLUMN_TITLE, program.getName())
+                                        .withValue(TvContract.Programs.COLUMN_SHORT_DESCRIPTION, program.getDescription())
                                         .withValue(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, program.getStartTime())
                                         .withValue(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, program.getEndTime())
                                         .withValue(TvContract.Programs.COLUMN_CANONICAL_GENRE, program.getGenre())

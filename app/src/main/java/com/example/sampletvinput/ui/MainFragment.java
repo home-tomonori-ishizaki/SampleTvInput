@@ -106,13 +106,16 @@ public class MainFragment extends BrowseFragment {
 
             try (Cursor cursor = resolver.query(TvContract.Channels.CONTENT_URI, null, null, null, null)) {
                 int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
+                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+
                 int idxDisplayName = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_DISPLAY_NAME);
 
                 while (cursor.moveToNext()) {
                     final ArrayObjectAdapter programAdapter = new ArrayObjectAdapter(new ProgramItemPresenter());
 
                     long channelId = cursor.getLong(idxChannelId);
-                    List<Program> programs = getPrograms(channelId);
+                    String serviceId = cursor.getString(idxServiceId);
+                    List<Program> programs = getPrograms(channelId, serviceId);
                     if (programs != null) {
                         programAdapter.addAll(0, programs);
                     }
@@ -132,22 +135,26 @@ public class MainFragment extends BrowseFragment {
             return null;
         }
 
-        private List<Program> getPrograms(long channelId) {
+        private List<Program> getPrograms(long channelId, String serviceId) {
             try (Cursor cursor = getActivity().getContentResolver().query(
                     TvContract.buildProgramsUriForChannel(channelId),
                     null, null, null, null)) {
                 int idxTitle = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_TITLE);
+                int idxDescription = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_SHORT_DESCRIPTION);
                 int idxStartTime = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS);
                 int idxEndTime = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS);
                 int idxGenre = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_CANONICAL_GENRE);
-
+                int idxVersion = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_VERSION_NUMBER);
                 List<Program> programs = new LinkedList<>();
                 while (cursor.moveToNext()) {
                     Program program = new Program()
+                            .setId(cursor.getLong(idxVersion))
                             .setName(cursor.getString(idxTitle))
+                            .setDescription(cursor.getString(idxDescription))
                             .setStartTime(cursor.getLong(idxStartTime))
                             .setEndTime(cursor.getLong(idxEndTime))
-                            .setGenre(cursor.getString(idxGenre));
+                            .setGenre(cursor.getString(idxGenre))
+                            .setServiceId(serviceId);
                     programs.add(program);
                 }
                 return programs;
