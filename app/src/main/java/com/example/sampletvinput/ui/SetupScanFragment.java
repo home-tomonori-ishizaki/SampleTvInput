@@ -149,18 +149,19 @@ public class SetupScanFragment extends Fragment {
 
             try {
                 if (mMode == SampleInputSetupActivity.MODE_NONE) {
-                    // delete programs for old channels
+                    // delete old programs and channels
                     deletePrograms(resolver, channelUri);
-                    // delete old channels and add new channels
                     resolver.delete(channelUri, null, null);
-                    // add programs
+                    // add channels and programs
                     addChannels(resolver, channelUri, inputId, apiKey);
+                    addPrograms(resolver, channelUri, apiKey);
                 } else if (mMode == SampleInputSetupActivity.MODE_UPDATE) {
                     // delete programs for old channels
                     deletePrograms(resolver, channelUri);
                     // add programs
                     addPrograms(resolver, channelUri, apiKey);
                 } else if (mMode == SampleInputSetupActivity.MODE_UPDATE_ONLY_CURRENT) {
+                    // add extra information for current programs
                     updateCurrentPrograms(resolver, channelUri, apiKey);
                 }
 

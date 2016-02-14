@@ -28,7 +28,7 @@ public class SampleInputSetupActivity extends Activity {
 
     public void scanChannels() {
         getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, SetupScanFragment.newInstance(MODE_UPDATE))
+                .replace(android.R.id.content, SetupScanFragment.newInstance(MODE_NONE))
                 .commit();
     }
 
