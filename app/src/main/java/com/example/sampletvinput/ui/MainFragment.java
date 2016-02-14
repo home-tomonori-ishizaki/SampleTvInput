@@ -41,7 +41,7 @@ public class MainFragment extends BrowseFragment {
     private int REQUEST_ID_UPDATE_PROGRAM = 0;
 
     private static final String SETTING_UPDATE_PROGRAMS = "Update programs";
-    private static final String SETTING_UPDATE_CURRENT_PROGRAMS = "Update current programs";
+    private static final String SETTING_UPDATE_CURRENT_PROGRAMS = "Add extra for current programs";
 
     public MainFragment() {
     }
