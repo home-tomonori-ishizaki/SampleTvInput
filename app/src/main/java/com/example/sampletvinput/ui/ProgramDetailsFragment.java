@@ -1,7 +1,10 @@
 package com.example.sampletvinput.ui;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v17.leanback.app.DetailsFragment;
@@ -12,6 +15,10 @@ import android.support.v17.leanback.widget.DetailsOverviewRow;
 import android.support.v17.leanback.widget.FullWidthDetailsOverviewRowPresenter;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
+import android.support.v17.leanback.widget.OnItemViewClickedListener;
+import android.support.v17.leanback.widget.Presenter;
+import android.support.v17.leanback.widget.Row;
+import android.support.v17.leanback.widget.RowPresenter;
 import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
 import android.util.Log;
 
@@ -42,6 +49,7 @@ public class ProgramDetailsFragment extends DetailsFragment {
 
         setupAdapter();
         setupDetailRow();
+        setOnItemViewClickedListener(new ItemViewClickedListener() );
     }
 
     private void setupAdapter() {
@@ -107,6 +115,7 @@ public class ProgramDetailsFragment extends DetailsFragment {
             if (program == null) {
                 return;
             }
+            mProgram = program;
 
             SparseArrayObjectAdapter sparseArrayObjectAdapter = new SparseArrayObjectAdapter();
 
@@ -115,8 +124,29 @@ public class ProgramDetailsFragment extends DetailsFragment {
             if (linkUrl != null) {
                 sparseArrayObjectAdapter.set(0, new Action(0, "Open link", ""));
             }
-            
+
             mRow.setActionsAdapter(sparseArrayObjectAdapter);
+        }
+    }
+
+    private final class ItemViewClickedListener implements OnItemViewClickedListener {
+        @Override
+        public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
+                                  RowPresenter.ViewHolder rowViewHolder, Row row) {
+            if (item instanceof Action) {
+                Action action = (Action)item;
+                if (action.getId() == TYPE_OPEN_LINK) {
+                    openLink(mProgram.getLinkUrl());
+                }
+            }
+        }
+    }
+
+    private void openLink(String linkUrl) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(linkUrl));
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
         }
     }
 }
