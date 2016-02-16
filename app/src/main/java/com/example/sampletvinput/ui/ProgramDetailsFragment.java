@@ -147,6 +147,9 @@ public class ProgramDetailsFragment extends DetailsFragment {
         try {
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
+            intent = new Intent(getActivity(), WebActivity.class);
+            intent.setData(Uri.parse(linkUrl));
+            startActivity(intent);
         }
     }
 }

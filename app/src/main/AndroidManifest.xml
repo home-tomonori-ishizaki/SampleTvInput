@@ -36,6 +36,10 @@
             android:name=".ui.ProgramDetailsActivity">
         </activity>
 
+        <activity
+            android:name=".ui.WebActivity">
+        </activity>
+
         <service
             android:name=".service.SampleInputService"
             android:label="@string/sample_input_label"
