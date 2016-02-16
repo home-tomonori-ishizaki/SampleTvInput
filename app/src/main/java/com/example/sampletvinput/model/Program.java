@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class Program implements Serializable {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
@@ -17,6 +18,7 @@ public class Program implements Serializable {
     private String mThumbnailUrl;
     private String mLinkUrl;
     private String mServiceId;
+    private List<String> mHashTags;
 
     public Program setId(long id) {
         mId = id;
@@ -117,5 +119,14 @@ public class Program implements Serializable {
 
     public String getServiceId() {
         return mServiceId;
+    }
+
+    public Program setHashTags(List<String> tags) {
+        mHashTags = tags;
+        return this;
+    }
+
+    public List<String> getHasTangs() {
+        return mHashTags;
     }
 }

@@ -28,12 +28,15 @@ import com.example.sampletvinput.util.NhkUtils;
 import com.example.sampletvinput.util.PreferenceUtils;
 import com.squareup.picasso.Picasso;
 
+import java.util.List;
+
 public class ProgramDetailsFragment extends DetailsFragment {
 
     private static final String TAG = ProgramDetailsFragment.class.getSimpleName();
     private Program mProgram;
     private ArrayObjectAdapter mAdapter;
     private static final long TYPE_OPEN_LINK = 0;
+    private static final long TYPE_OPEN_HASHTAG = 1;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -119,10 +122,18 @@ public class ProgramDetailsFragment extends DetailsFragment {
 
             SparseArrayObjectAdapter sparseArrayObjectAdapter = new SparseArrayObjectAdapter();
 
-            String linkUrl = program.getLinkUrl();
+            String linkUrl = mProgram.getLinkUrl();
             Log.i(TAG, "link url:" + linkUrl);
+            int key = 0;
             if (linkUrl != null) {
-                sparseArrayObjectAdapter.set(0, new Action(0, "Open link", ""));
+                sparseArrayObjectAdapter.set(key++, new Action(TYPE_OPEN_LINK, "Open link", ""));
+            }
+
+            List<String> hashTags = mProgram.getHasTangs();
+            if (hashTags != null) {
+                for (String tag : hashTags) {
+                    sparseArrayObjectAdapter.set(key++, new Action(TYPE_OPEN_HASHTAG,  "Open Hash tags", tag));
+                }
             }
 
             mRow.setActionsAdapter(sparseArrayObjectAdapter);
@@ -137,12 +148,15 @@ public class ProgramDetailsFragment extends DetailsFragment {
                 Action action = (Action)item;
                 if (action.getId() == TYPE_OPEN_LINK) {
                     openLink(mProgram.getLinkUrl());
+                } else if (action.getId() == TYPE_OPEN_HASHTAG) {
+                    openHashTag((String) action.getLabel2());
                 }
             }
         }
     }
 
     private void openLink(String linkUrl) {
+        Log.i(TAG, "linkUrl:" + linkUrl);
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(linkUrl));
         try {
             startActivity(intent);
@@ -151,6 +165,16 @@ public class ProgramDetailsFragment extends DetailsFragment {
             intent.setData(Uri.parse(linkUrl));
             startActivity(intent);
         }
+    }
+
+    private void openHashTag(String hashTag) {
+        Log.i(TAG, "hashTag:" + hashTag);
+        if (hashTag.startsWith("#")) {
+            hashTag = hashTag.substring(1);
+        }
+
+        String url = "https://twitter.com/hashtag/" + hashTag;
+        openLink(url);
     }
 }
 

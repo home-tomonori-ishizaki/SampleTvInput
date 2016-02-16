@@ -16,4 +16,5 @@ public class NhkProgram {
     public List<String> genres;
     public NhkLogo program_logo;
     public String program_url;
+    public List<String> hashtags;
 }

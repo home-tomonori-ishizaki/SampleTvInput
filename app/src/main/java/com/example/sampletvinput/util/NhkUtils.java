@@ -115,7 +115,8 @@ public class NhkUtils {
                 .setGenre(getGenre())
                 .setThumbnailUrl(nhk.program_logo != null ? nhk.program_logo.url : null)
                 .setLinkUrl(nhk.program_url)
-                .setServiceId(nhk.service != null ? nhk.service.id : null);
+                .setServiceId(nhk.service != null ? nhk.service.id : null)
+                .setHashTags(nhk.hashtags);
     }
 
     private static final String[] SUPPORTED_GENRES = new String[] {
