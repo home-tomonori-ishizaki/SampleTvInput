@@ -319,9 +319,6 @@ public class SetupScanFragment extends Fragment {
                 e.printStackTrace();
             }
 
-            // COLUMN_APP_LINK_XXX are supported above api-level 23(M)
-            boolean hasAppLink = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
-
             long current = System.currentTimeMillis();
             for (Map.Entry<Long, String> entry : channelIdMap.entrySet()) {
                 long channelId = entry.getKey();
@@ -340,23 +337,12 @@ public class SetupScanFragment extends Fragment {
                             continue;
                         }
                         String thumbnailUrl = program.getThumbnailUrl();
-                        String linkUrl = program.getLinkUrl();
 
                         // update thumbnail url
                         if (thumbnailUrl != null) {
                             ContentValues values = new ContentValues();
                             values.put(TvContract.Programs.COLUMN_POSTER_ART_URI, thumbnailUrl);
                             resolver.update(TvContract.buildProgramUri(id), values, null, null);
-                        }
-
-                        // update app link
-                        if (hasAppLink && linkUrl != null) {
-                            ContentValues values = new ContentValues();
-                            values.put(TvContract.Channels.COLUMN_APP_LINK_INTENT_URI, linkUrl);
-                            if (thumbnailUrl != null) {
-                                values.put(TvContract.Channels.COLUMN_APP_LINK_POSTER_ART_URI, thumbnailUrl);
-                            }
-                            resolver.update(TvContract.buildChannelUri(channelId), values, null, null);
                         }
                     }
                 } catch (Exception e) {
