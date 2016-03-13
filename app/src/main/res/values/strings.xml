@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">SampleTvInput</string>
     <string name="sample_input_label">NHK</string>
+    <string name="no_title">No title</string>
 </resources>
