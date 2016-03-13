@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.OperationApplicationException;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
@@ -26,6 +27,7 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.example.sampletvinput.R;
 import com.example.sampletvinput.data.NhkService;
 import com.example.sampletvinput.model.Program;
 import com.example.sampletvinput.util.HttpUtils;
@@ -191,6 +193,9 @@ public class SetupScanFragment extends Fragment {
                 throws HttpUtils.UnauthorizedException, HttpUtils.BadRequestException {
             Map<String, String> logoMap = new HashMap<>();
 
+            // COLUMN_APP_LINK_XXX are supported above api-level 23(M)
+            boolean hasAppLink = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
+
             // add channels
             int channelNumber = 1;
             for (String serviceId : CHANNEL_LIST) {
@@ -207,7 +212,19 @@ public class SetupScanFragment extends Fragment {
                 values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
                 values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, service.name);
                 values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
+
+                // update app link
+                if (hasAppLink) {
+                    Intent appLinkIntent = new Intent(Intent.ACTION_VIEW);
+                    appLinkIntent.setClass(getActivity(), ProgramDetailsActivity.class);
+                    appLinkIntent.putExtra(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
+                    values.put(TvContract.Channels.COLUMN_APP_LINK_INTENT_URI, appLinkIntent.toUri(Intent.URI_INTENT_SCHEME));
+                    values.put(TvContract.Channels.COLUMN_APP_LINK_POSTER_ART_URI, service.logo.url);
+                    values.put(TvContract.Channels.COLUMN_APP_LINK_TEXT, getActivity().getString(R.string.app_link_text));
+                }
+
                 resolver.insert(TvContract.Channels.CONTENT_URI, values);
+
                 ++channelNumber;
             }
 
