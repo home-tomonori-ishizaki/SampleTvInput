@@ -1,9 +1,14 @@
 package com.example.sampletvinput.ui;
 
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.media.tv.TvContract;
+import android.media.tv.TvInputInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -20,10 +25,13 @@ import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
+import android.text.TextUtils;
 import android.util.Log;
 
+import com.example.sampletvinput.model.Channel;
 import com.example.sampletvinput.model.Program;
 import com.example.sampletvinput.presenter.ProgramDetailsDescriptionPresenter;
+import com.example.sampletvinput.service.SampleInputService;
 import com.example.sampletvinput.util.NhkUtils;
 import com.example.sampletvinput.util.PreferenceUtils;
 import com.squareup.picasso.Picasso;
@@ -47,12 +55,95 @@ public class ProgramDetailsFragment extends DetailsFragment {
                 .getSerializableExtra(ProgramDetailsActivity.EXTRA_PROGRAM);
 
         if (mProgram == null) {
-            return;
+            // case of launching from app link, then need to find current program
+            String displayNumber = getActivity().getIntent().getStringExtra(TvContract.Channels.COLUMN_DISPLAY_NUMBER);
+            if (TextUtils.isEmpty(displayNumber)) {
+                return;
+            }
+
+            Channel channel = findChannel(displayNumber);
+            if (channel == null) {
+                return;
+            }
+
+            mProgram = findCurrentProgram(channel);
+            if (mProgram == null) {
+                // set empty program
+                mProgram = new Program();
+            }
         }
 
         setupAdapter();
         setupDetailRow();
         setOnItemViewClickedListener(new ItemViewClickedListener() );
+    }
+
+    private Channel findChannel(String displayNumber) {
+        // get channelUri for self input id
+        ComponentName component = new ComponentName(getActivity().getApplicationContext(), SampleInputService.class);
+        String inputId = TvContract.buildInputId(component);
+        Uri channelUri = TvContract.buildChannelsUriForInput(inputId);
+
+        ContentResolver resolver = getActivity().getContentResolver();
+        try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
+            if (cursor == null) {
+                return null;
+            }
+            int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
+            int idxDisplayName = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_DISPLAY_NAME);
+            int idxDisplayNumber = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_DISPLAY_NUMBER);
+            int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+            while (cursor.moveToNext()) {
+                 String number = cursor.getString(idxDisplayNumber);
+                if (TextUtils.equals(number, displayNumber)) {
+                    return new Channel()
+                            .setId(cursor.getLong(idxChannelId))
+                            .setDisplayName(cursor.getString(idxDisplayName))
+                            .setDisplayNumber(displayNumber)
+                            .setServiceId(cursor.getString(idxServiceId));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    Program findCurrentProgram(Channel channel) {
+        long current = System.currentTimeMillis();
+        Uri programUri = TvContract.buildProgramsUriForChannel(channel.getId(), current, current);
+
+        ContentResolver resolver = getActivity().getContentResolver();
+        try (Cursor cursor = resolver.query(programUri, null, null, null, null)) {
+            if (cursor == null) {
+                return null;
+            }
+
+            if (!cursor.moveToNext()) {
+                // not found case
+                return null;
+            }
+
+            int idxTitle = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_TITLE);
+            int idxDescription = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_SHORT_DESCRIPTION);
+            int idxStartTime = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS);
+            int idxEndTime = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS);
+            int idxGenre = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_CANONICAL_GENRE);
+            int idxVersion = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_VERSION_NUMBER);
+            return new Program()
+                    .setId(cursor.getLong(idxVersion))
+                    .setName(cursor.getString(idxTitle))
+                    .setDescription(cursor.getString(idxDescription))
+                    .setStartTime(cursor.getLong(idxStartTime))
+                    .setEndTime(cursor.getLong(idxEndTime))
+                    .setGenre(cursor.getString(idxGenre))
+                    .setServiceId(channel.getServiceId());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void setupAdapter() {
