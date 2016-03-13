@@ -1,5 +1,9 @@
 package com.example.sampletvinput.model;
 
+import android.database.Cursor;
+import android.media.tv.TvContract;
+import android.net.Uri;
+
 public class Channel {
     private long mId;
     private String mDisplayName;
@@ -41,4 +45,30 @@ public class Channel {
     public String getServiceId() {
         return mServiceId;
     }
+
+    public Uri getLogoUri() {
+        return TvContract.buildChannelLogoUri(getId());
+    }
+
+    public static Channel fromCursor(Cursor cursor) {
+        Channel channel = new Channel();
+
+        try {
+            int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
+            int idxDisplayName = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_DISPLAY_NAME);
+            int idxDisplayNumber = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_DISPLAY_NUMBER);
+            int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+
+            channel.setId(cursor.getLong(idxChannelId))
+                    .setDisplayName(cursor.getString(idxDisplayName))
+                    .setDisplayNumber(cursor.getString(idxDisplayNumber))
+                    .setServiceId(cursor.getString(idxServiceId));
+        } catch (Exception e ) {
+            e.printStackTrace();
+        }
+
+        return channel;
+    }
+
+
 }

@@ -1,5 +1,8 @@
 package com.example.sampletvinput.model;
 
+import android.database.Cursor;
+import android.media.tv.TvContract;
+
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -128,5 +131,30 @@ public class Program implements Serializable {
 
     public List<String> getHasTangs() {
         return mHashTags;
+    }
+
+    public static Program fromCursor(Cursor cursor, String serviceId) {
+        Program program = new Program();
+
+        try {
+            int idxTitle = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_TITLE);
+            int idxDescription = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_SHORT_DESCRIPTION);
+            int idxStartTime = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS);
+            int idxEndTime = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS);
+            int idxGenre = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_CANONICAL_GENRE);
+            int idxVersion = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_VERSION_NUMBER);
+
+            program.setId(cursor.getLong(idxVersion))
+                    .setName(cursor.getString(idxTitle))
+                    .setDescription(cursor.getString(idxDescription))
+                    .setStartTime(cursor.getLong(idxStartTime))
+                    .setEndTime(cursor.getLong(idxEndTime))
+                    .setGenre(cursor.getString(idxGenre))
+                    .setServiceId(serviceId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return program;
     }
 }
