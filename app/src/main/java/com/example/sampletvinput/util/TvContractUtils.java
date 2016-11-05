@@ -45,7 +45,7 @@ public class TvContractUtils {
         Map<Long, String> channelIdMap = new LinkedHashMap<>();
         try(Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
             int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
-            int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+            int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_NETWORK_AFFILIATION);
             while (cursor.moveToNext()) {
                 long channelId = cursor.getLong(idxChannelId);
                 String serviceId = cursor.getString(idxServiceId);

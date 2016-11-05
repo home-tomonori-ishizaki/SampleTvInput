@@ -57,7 +57,7 @@ public class Channel {
             int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
             int idxDisplayName = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_DISPLAY_NAME);
             int idxDisplayNumber = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_DISPLAY_NUMBER);
-            int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+            int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_NETWORK_AFFILIATION);
 
             channel.setId(cursor.getLong(idxChannelId))
                     .setDisplayName(cursor.getString(idxDisplayName))

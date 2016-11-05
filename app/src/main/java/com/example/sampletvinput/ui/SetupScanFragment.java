@@ -215,7 +215,7 @@ public class SetupScanFragment extends Fragment {
                 values.put(TvContract.Channels.COLUMN_INPUT_ID, inputId);
                 values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, String.valueOf(channelNumber));
                 values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, service.name);
-                values.put(TvContract.Channels.COLUMN_SERVICE_ID, serviceId);
+                values.put(TvContract.Channels.COLUMN_NETWORK_AFFILIATION, serviceId);
 
                 // update app link
                 if (hasAppLink) {
@@ -235,7 +235,7 @@ public class SetupScanFragment extends Fragment {
             // add logo
             try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
                 int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
-                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_NETWORK_AFFILIATION);
                 while (cursor.moveToNext()) {
                     String serviceId = cursor.getString(idxServiceId);
                     String logoUrl = logoMap.get(serviceId);
@@ -272,7 +272,7 @@ public class SetupScanFragment extends Fragment {
                 boolean hasSearchable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
 
                 int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
-                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_NETWORK_AFFILIATION);
 
                 int count = 0;
                 ArrayList<ContentProviderOperation> ops = new ArrayList<>();
