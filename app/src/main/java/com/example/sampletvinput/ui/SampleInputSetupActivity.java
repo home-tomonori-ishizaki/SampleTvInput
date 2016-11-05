@@ -9,6 +9,7 @@ public class SampleInputSetupActivity extends Activity {
     public static final int   MODE_NONE   = 0;                 // update all
     public static final int   MODE_UPDATE = 1;                 // update only programs
     public static final int   MODE_UPDATE_ONLY_CURRENT = 2;  // update only current programs
+    public static final int   MODE_UPDATE_ONLY_TODAY = 3;    // update only today's programs
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

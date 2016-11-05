@@ -33,6 +33,7 @@ import com.example.sampletvinput.model.Program;
 import com.example.sampletvinput.util.HttpUtils;
 import com.example.sampletvinput.util.NhkUtils;
 import com.example.sampletvinput.util.PreferenceUtils;
+import com.example.sampletvinput.util.TvContractUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -164,7 +165,10 @@ public class SetupScanFragment extends Fragment {
                     addPrograms(resolver, channelUri, apiKey);
                 } else if (mMode == SampleInputSetupActivity.MODE_UPDATE_ONLY_CURRENT) {
                     // add extra information for current programs
-                    updateCurrentPrograms(resolver, channelUri, apiKey);
+                    updateCurrentPrograms(resolver, inputId, apiKey, 0);
+                } else if (mMode == SampleInputSetupActivity.MODE_UPDATE_ONLY_TODAY) {
+                    // add extra information for current programs
+                    updateCurrentPrograms(resolver, inputId, apiKey, 1000 * 60 * 60 * 24);
                 }
 
             } catch (HttpUtils.BadRequestException e) {
@@ -319,31 +323,21 @@ public class SetupScanFragment extends Fragment {
             ops.clear();
         }
 
-        private void updateCurrentPrograms(ContentResolver resolver, Uri channelUri, String apiKey) {
+        private void updateCurrentPrograms(ContentResolver resolver, String inputId, String apiKey, long duration) {
             // get channel id list
-            Map<Long, String> channelIdMap = new LinkedHashMap<>();
-            try (Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
-                int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
-                int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
-                while (cursor.moveToNext()) {
-                    long channelId = cursor.getLong(idxChannelId);
-                    String serviceId = cursor.getString(idxServiceId);
-                    if (channelId > 0) {
-                        channelIdMap.put(channelId, serviceId);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            Map<Long, String> channelIdMap = TvContractUtils.getChannelIds(resolver, inputId);
 
             long current = System.currentTimeMillis();
             for (Map.Entry<Long, String> entry : channelIdMap.entrySet()) {
                 long channelId = entry.getKey();
                 String serviceId = entry.getValue();
-                Uri programUri = TvContract.buildProgramsUriForChannel(channelId, current, current + 1000);
+                Uri programUri = TvContract.buildProgramsUriForChannel(channelId, current, current + duration);
                 try (Cursor cursor = resolver.query(programUri, null, null, null, null)) {
-                    // update only first program
-                    if (cursor.moveToNext()) {
+                    if (cursor == null || !cursor.moveToFirst()) {
+                        continue;
+                    }
+
+                    do  {
                         int idxId = cursor.getColumnIndexOrThrow(TvContract.Programs._ID);
                         int idxVersion = cursor.getColumnIndexOrThrow(TvContract.Programs.COLUMN_VERSION_NUMBER);
 
@@ -361,7 +355,7 @@ public class SetupScanFragment extends Fragment {
                             values.put(TvContract.Programs.COLUMN_POSTER_ART_URI, thumbnailUrl);
                             resolver.update(TvContract.buildProgramUri(id), values, null, null);
                         }
-                    }
+                    } while (cursor.moveToNext());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

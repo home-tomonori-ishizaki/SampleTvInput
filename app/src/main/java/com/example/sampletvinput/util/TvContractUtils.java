@@ -15,7 +15,9 @@ import com.example.sampletvinput.model.Program;
 import com.example.sampletvinput.service.SampleInputService;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TvContractUtils {
     private static final String TAG = TvContract.class.getSimpleName();
@@ -34,6 +36,28 @@ public class TvContractUtils {
             Log.w(TAG, "Unable to get channels", e);
         }
         return channels;
+    }
+
+    @NonNull
+    public static Map<Long, String> getChannelIds(ContentResolver resolver, String inputId) {
+        Uri channelUri = TvContract.buildChannelsUriForInput(inputId);
+
+        Map<Long, String> channelIdMap = new LinkedHashMap<>();
+        try(Cursor cursor = resolver.query(channelUri, null, null, null, null)) {
+            int idxChannelId = cursor.getColumnIndexOrThrow(TvContract.Channels._ID);
+            int idxServiceId = cursor.getColumnIndexOrThrow(TvContract.Channels.COLUMN_SERVICE_ID);
+            while (cursor.moveToNext()) {
+                long channelId = cursor.getLong(idxChannelId);
+                String serviceId = cursor.getString(idxServiceId);
+                if (channelId > 0) {
+                    channelIdMap.put(channelId, serviceId);
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return channelIdMap;
     }
 
     @NonNull
