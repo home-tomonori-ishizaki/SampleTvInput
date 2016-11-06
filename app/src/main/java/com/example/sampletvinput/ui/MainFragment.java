@@ -40,7 +40,7 @@ public class MainFragment extends BrowseFragment {
 
     private static final String SETTING_UPDATE_PROGRAMS = "Update programs";
     private static final String SETTING_UPDATE_CURRENT_PROGRAMS = "Add extra for current programs";
-    private static final String SETTING_UPDATE_TODAY_PROGRAMS = "Add extra for today's programs";
+    private static final String SETTING_UPDATE_SOME_PROGRAMS = "Add extra for 4 hours programs";
 
     public MainFragment() {
     }
@@ -89,7 +89,7 @@ public class MainFragment extends BrowseFragment {
         ArrayObjectAdapter settingsAdapter = new ArrayObjectAdapter(new StringItemPresenter());
         settingsAdapter.add(SETTING_UPDATE_PROGRAMS);
         settingsAdapter.add(SETTING_UPDATE_CURRENT_PROGRAMS);
-        settingsAdapter.add(SETTING_UPDATE_TODAY_PROGRAMS);
+        settingsAdapter.add(SETTING_UPDATE_SOME_PROGRAMS);
         mRowAdapter.add(new ListRow(new IconHeaderItem(0, "Settings"), settingsAdapter));
     }
 
@@ -139,8 +139,8 @@ public class MainFragment extends BrowseFragment {
                         updatePrograms(SampleInputSetupActivity.MODE_UPDATE);
                     } else if (item == SETTING_UPDATE_CURRENT_PROGRAMS) {
                         updatePrograms(SampleInputSetupActivity.MODE_UPDATE_ONLY_CURRENT);
-                    } else if (item == SETTING_UPDATE_TODAY_PROGRAMS) {
-                        updatePrograms(SampleInputSetupActivity.MODE_UPDATE_ONLY_TODAY);
+                    } else if (item == SETTING_UPDATE_SOME_PROGRAMS) {
+                        updatePrograms(SampleInputSetupActivity.MODE_UPDATE_SOME_PROGRAMS);
                     }
                 } else if (item instanceof Program) {
                     startDetailsActivity((Program)item);

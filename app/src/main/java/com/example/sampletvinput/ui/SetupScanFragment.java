@@ -166,9 +166,9 @@ public class SetupScanFragment extends Fragment {
                 } else if (mMode == SampleInputSetupActivity.MODE_UPDATE_ONLY_CURRENT) {
                     // add extra information for current programs
                     updateCurrentPrograms(resolver, inputId, apiKey, 0);
-                } else if (mMode == SampleInputSetupActivity.MODE_UPDATE_ONLY_TODAY) {
+                } else if (mMode == SampleInputSetupActivity.MODE_UPDATE_SOME_PROGRAMS) {
                     // add extra information for current programs
-                    updateCurrentPrograms(resolver, inputId, apiKey, 1000 * 60 * 60 * 24);
+                    updateCurrentPrograms(resolver, inputId, apiKey, 1000 * 60 * 60 * 4);
                 }
 
             } catch (HttpUtils.BadRequestException e) {
