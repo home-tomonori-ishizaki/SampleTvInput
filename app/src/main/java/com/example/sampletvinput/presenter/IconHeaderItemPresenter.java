@@ -35,6 +35,7 @@ public class IconHeaderItemPresenter  extends RowHeaderPresenter {
     public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object o) {
         IconHeaderItem iconHeaderItem = (IconHeaderItem) ((ListRow) o).getHeaderItem();
         View rootView = viewHolder.view;
+        rootView.setFocusable(true);
 
         Uri uri = iconHeaderItem.getIconUri();
         if (uri != null) {
